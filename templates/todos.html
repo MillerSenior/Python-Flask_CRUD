@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+<!--code as if coding inside the body of a html file-->
+{% block content %}
+<h1>Get it Done</h1>
+<form method="post">
+    <label for="task">New Task:
+        <input type="text" name='task' id="task">
+    </label>
+    <input class="btn btn-primary btn-sm" type="submit" value="Add Task">
+</form>
+<hr>
+<!--jinja conditional/for loop syntax-->
+{% if tasks|length == 0 %}
+<!--if there are items in the task list-->
+<p>No tasks yet</p>
+{% else %}
+<h2>Incomplete Tasks</h2>
+<ul>
+    {% for task in tasks %}
+    <li>{{task.name.title()}}</li>
+    <form action="/delete-task" method="POST" style="display:inline-block;">
+        <input type="hidden" name="task-id" value="{{task.id}}" />
+        <input type="submit" value="Delete!" class="btn btn-danger btn-sm" /><!--btn-outline-danger-->
+    </form>
+    <form action="/completed-task" method="POST" style="display:inline-block;">
+        <input type="hidden" name="task-id" value="{{task.id}}" />
+        <input type="submit" value="Completed!" class="btn btn-success btn-sm" /><!--btn-outline-danger-->
+    </form>
+    {% endfor %}
+</ul>
+{% endif %}
+<!--necessary for conditional to end-->
+<hr />
+<h2>Completed</h2>
+<ul>
+    {% for task in completed_tasks %}
+    <li>{{task.name}}</li>
+    {% endfor %}
+</ul>
+{% endblock %}

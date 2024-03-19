@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    <link rel="stylesheet" href="../static/bootstrap.css">
+    <script src="../static/bootstrap.js"></script>
+    
+</head>
+<body>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+    <ul>
+    {% for category,message in messages %}
+        <li class="{{category}}">{{message}}</li>
+    {% endfor %}
+    </ul>
+{% endwith %}
+    {% block content %}
+    <!--location to place code in child templates that extend this template-->
+     {% endblock %}
+     <div style="text-align: center;">
+        <a href="./logout">Log Out</a>
+    </div>
+</body>
+</html>
