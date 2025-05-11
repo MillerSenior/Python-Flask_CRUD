@@ -3,24 +3,1029 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{title}}</title>
-    <link rel="stylesheet" href="../static/bootstrap.css">
-    <script src="../static/bootstrap.js"></script>
-    
+    <title>{% block title %}{% endblock %} - Task Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        :root {
+            --primary-color: #3a86ff;
+            --secondary-color: #8338ec;
+            --success-color: #38b000;
+            --info-color: #00b4d8;
+            --warning-color: #ffbe0b;
+            --danger-color: #ff006e;
+            --dark-bg: #121212;
+            --card-bg: #ffffff1a;
+            --header-bg: rgba(255, 255, 255, 0.05);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #121212, #2a2a2a);
+            color: #f8f9fa;
+            min-height: 100vh;
+            overflow-x: hidden;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        body::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        
+        /* Glass-morphism effect */
+        .dashboard-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #ffffff1a;
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            margin: 7px; /* Increased margin around all cards */
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+        }
+        
+        .card-header {
+            background: var(--header-bg);
+            border-bottom: 1px solid #ffffff1a;
+            border-radius: 15px 15px 0 0;
+            padding: 0.75rem 1rem; /* Increased padding */
+        }
+        
+        .task-card {
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(255, 255, 255, 0.05);
+            margin-bottom: 8px;
+            border-radius: 12px;
+        }
+        
+        .task-card:hover {
+            background: #ffffff1a;
+            transform: scale(1.02);
+        }
+        
+        /* Futuristic borders for priority */
+        .priority-high {
+            border-left: 4px solid var(--danger-color);
+            box-shadow: 0 0 15px rgba(255, 0, 110, 0.3);
+        }
+        
+        .priority-medium {
+            border-left: 4px solid var(--warning-color);
+            box-shadow: 0 0 15px rgba(255, 190, 11, 0.3);
+        }
+        
+        .priority-low {
+            border-left: 4px solid var(--success-color);
+            box-shadow: 0 0 15px rgba(56, 176, 0, 0.3);
+        }
+        
+        .category-badge {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 50px;
+        }
+        
+        /* Futuristic modal */
+        .modal-content {
+            background: rgba(33, 33, 33, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #ffffff1a;
+            border-radius: 16px;
+            color: #fff;
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid #ffffff1a;
+        }
+        
+        .modal-footer {
+            border-top: 1px solid #ffffff1a;
+        }
+        
+        /* Neon effects */
+        .btn-primary {
+            background: var(--primary-color);
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.5);
+        }
+        
+        .btn-success {
+            background: var(--success-color);
+            border-color: var(--success-color);
+            box-shadow: 0 0 10px rgba(56, 176, 0, 0.5);
+        }
+        
+        .btn-danger {
+            background: var(--danger-color);
+            border-color: var(--danger-color);
+            box-shadow: 0 0 10px rgba(255, 0, 110, 0.5);
+        }
+        
+        /* Flash message styling */
+        .flash-messages-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            padding: 0 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .flash-message {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: auto;
+            max-width: 90%;
+            min-width: 200px;
+            padding: 0.75rem 1.25rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+        }
+        
+        .flash-message .btn-close {
+            margin-left: 1rem;
+            position: relative;
+            padding: 0.5rem;
+            min-width: 24px;
+            min-height: 24px;
+            opacity: 0.8;
+        }
+        
+        .flash-message .alert-content {
+            flex: 1;
+            word-break: break-word;
+            padding-right: 0.5rem;
+        }
+        
+        .flash-message.alert-success {
+            background-color: rgba(56, 176, 0, 0.2);
+            border-color: rgba(56, 176, 0, 0.3);
+            color: #000;
+        }
+        
+        .flash-message.alert-danger {
+            background-color: rgba(255, 0, 110, 0.2);
+            border-color: rgba(255, 0, 110, 0.3);
+            color: #000;
+        }
+        
+        .flash-message.alert-warning {
+            background-color: rgba(255, 190, 11, 0.2);
+            border-color: rgba(255, 190, 11, 0.3);
+            color: #000;
+        }
+        
+        .flash-message.alert-info {
+            background-color: rgba(0, 180, 216, 0.2);
+            border-color: rgba(0, 180, 216, 0.3);
+            color: #000;
+        }
+        
+        /* Futuristic navbar */
+        .navbar {
+            background: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1030;
+            padding: 0.5rem 1rem;
+            height: 60px;
+        }
+        
+        /* Table styling */
+        .table {
+            color: #000000;
+            background: transparent;
+        }
+        
+        .table thead th {
+            background: rgba(255, 255, 255, 0.7);
+            border-color: rgba(0, 0, 0, 0.1);
+            color: #000000;
+            font-weight: bold;
+            text-shadow: none;
+            padding: 0.5rem;
+            border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+        }
+        
+        .table tbody tr {
+            transition: all 0.3s;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Make sure table cells always have visible text */
+        .table td, .table th {
+            color: #000000 !important;
+            padding: 0.3rem 0.5rem;
+            vertical-align: middle;
+            text-shadow: none;
+        }
+        
+        /* Input styling */
+        .form-control, .form-select {
+            background: #ffffff0d;
+            border: 1px solid #ffffff1a;
+            color: #fff;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background: #ffffff1a;
+            border-color: rgba(255, 255, 255, 0.3);
+            color: #fff;
+            box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+        }
+        
+        /* Tab styling */
+        .nav-tabs {
+            border-bottom: 1px solid #ffffff1a;
+        }
+        
+        .nav-tabs .nav-link {
+            color: #ccc;
+            border: none;
+            border-bottom: 2px solid transparent;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .nav-tabs .nav-link.active {
+            background: transparent;
+            color: #fff;
+            border-bottom: 2px solid var(--primary-color);
+        }
+        
+        /* Progress bar */
+        .progress {
+            background: #ffffff1a;
+            height: 8px;
+            border-radius: 4px;
+        }
+        
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+        }
+        
+        /* Glowing text for important elements */
+        .text-glow {
+            text-shadow: 0 0 10px rgba(58, 134, 255, 0.7);
+        }
+        
+        /* Animated borders */
+        @keyframes border-glow {
+            0% { box-shadow: 0 0 10px rgba(58, 134, 255, 0.5); }
+            50% { box-shadow: 0 0 20px rgba(58, 134, 255, 0.8); }
+            100% { box-shadow: 0 0 10px rgba(58, 134, 255, 0.5); }
+        }
+        
+        .glow-border {
+            animation: border-glow 2s infinite;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: #ffffff0d;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        /* Container adjustments for better fit */
+        .container-fluid {
+            padding: 0.5rem;
+            max-height: 100%;
+            overflow-y: auto;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE and Edge */
+        }
+        
+        .container-fluid::-webkit-scrollbar {
+            display: none; /* Chrome, Safari, Opera */
+        }
+        
+        /* Card body padding adjustment for smaller cards */
+        .card-body {
+            padding: 0.75rem !important; /* Increased padding */
+        }
+        
+        /* More compact spacing */
+        .row {
+            --bs-gutter-x: 0.5rem;
+        }
+        
+        .pb-4, .py-4 {
+            padding-bottom: 0.5rem !important;
+        }
+        
+        .pt-4, .py-4 {
+            padding-top: 0.5rem !important;
+        }
+        
+        /* Smaller chart heights */
+        .chart-container {
+            height: 100px !important;
+        }
+        
+        /* More compact badge and button styling */
+        .badge {
+            padding: 0.15rem 0.35rem;
+            font-size: 0.65rem;
+            font-weight: bold;
+            text-shadow: none;
+            color: #000000 !important;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        .btn-group-sm>.btn, .btn-sm {
+            padding: 0.1rem 0.3rem;
+            font-size: 0.7rem;
+        }
+        
+        /* Make the modals more compact */
+        .modal-body {
+            padding: 0.5rem;
+        }
+        
+        .modal-header, .modal-footer {
+            padding: 0.4rem 0.5rem;
+        }
+        
+        /* Responsive layout adjustments */
+        @media (max-width: 767.98px) {
+            h2 {
+                font-size: 1.25rem;
+            }
+            
+            h5 {
+                font-size: 0.9rem;
+            }
+            
+            .chart-container {
+                height: 80px !important;
+            }
+            
+            .navbar {
+                height: 50px;
+            }
+            
+            .footer {
+                height: 40px;
+                font-size: 0.75rem;
+            }
+            
+            .main-container {
+                margin-top: 60px;
+                margin-bottom: 60px; /* Increased bottom margin for mobile */
+                max-height: calc(100vh - 120px);
+                padding: 0.75rem;
+            }
+            
+            .floating-timers-container {
+                bottom: 65px; /* Increased for mobile as well */
+            }
+            
+            .row[style*="height"] {
+                gap: 1rem !important;
+            }
+            
+            /* Additional safeguards for mobile */
+            .half-height {
+                height: calc(50% - 25px) !important; /* Even more reduction on mobile */
+            }
+        }
+        
+        /* Optimize table view for smaller screens */
+        @media (max-width: 991.98px) {
+            .table-responsive {
+                max-height: 250px;
+                overflow-y: auto;
+            }
+        }
+        
+        /* Floating timers container for multitasking */
+        .floating-timers-container {
+            position: fixed;
+            bottom: 75px; /* Increased to be further above the footer */
+            right: 15px;
+            z-index: 1050;
+            max-width: 280px;
+            max-height: 35vh; /* Reduced height to fit with larger margins */
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            scrollbar-width: none;
+        }
+        
+        .floating-timers-container::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .timer-card {
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid #ffffff1a;
+            border-radius: 10px;
+            padding: 8px;
+            width: 260px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            animation: slide-in 0.3s ease;
+        }
+        
+        .timer-card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-3px);
+        }
+        
+        @keyframes slide-in {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .timer-card .task-name {
+            font-weight: bold;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .timer-card .timer-display {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 1.5rem;
+            color: var(--primary-color);
+            text-shadow: 0 0 10px rgba(58, 134, 255, 0.5);
+        }
+        
+        .timer-card .timer-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+        }
+        
+        /* Pill-shaped badge for timer status */
+        .timer-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .timer-badge-running {
+            background: rgba(56, 176, 0, 0.2);
+            color: var(--success-color);
+            border: 1px solid rgba(56, 176, 0, 0.3);
+        }
+        
+        .timer-badge-paused {
+            background: rgba(255, 190, 11, 0.2);
+            color: var(--warning-color);
+            border: 1px solid rgba(255, 190, 11, 0.3);
+        }
+        
+        /* Priority and category badge colors with better contrast */
+        .bg-high-subtle {
+            background-color: rgba(255, 0, 110, 0.5) !important;
+        }
+        .text-high {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        .bg-medium-subtle {
+            background-color: rgba(255, 190, 11, 0.5) !important;
+        }
+        .text-medium {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        .bg-low-subtle {
+            background-color: rgba(56, 176, 0, 0.5) !important;
+        }
+        .text-low {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        .bg-work-subtle {
+            background-color: rgba(58, 134, 255, 0.5) !important;
+        }
+        .text-work {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        .bg-personal-subtle {
+            background-color: rgba(131, 56, 236, 0.5) !important;
+        }
+        .text-personal {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        .bg-shopping-subtle {
+            background-color: rgba(0, 180, 216, 0.5) !important;
+        }
+        .text-shopping {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        .bg-miscellaneous-subtle {
+            background-color: rgba(115, 115, 115, 0.5) !important;
+        }
+        .text-miscellaneous {
+            color: #000000 !important;
+            font-weight: bold;
+            text-shadow: none;
+        }
+        
+        /* Improve dropdown visibility */
+        .form-select {
+            background-color: rgba(40, 40, 40, 0.9) !important;
+            color: white !important;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .form-select option {
+            background-color: #282828;
+            color: white;
+        }
+        
+        /* Make dropdown options visible without hovering */
+        .form-select:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.25rem rgba(58, 134, 255, 0.25);
+        }
+        
+        /* Add higher contrast for form controls */
+        .form-control::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        /* Ensure badges in tables have proper contrast */
+        .table .badge {
+            display: inline-block;
+            min-width: 70px;
+            text-align: center;
+            border: 1px solid rgba(0, 0, 0, 0.2);
+            color: #000000 !important;
+            text-shadow: none;
+            background-color: rgba(255, 255, 255, 0.9) !important;
+        }
+        
+        /* Fixed footer */
+        .footer {
+            background: rgba(18, 18, 18, 0.8);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-top: 1px solid #ffffff1a;
+            box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1020;
+            padding: 0.5rem 1rem;
+            height: 50px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+        }
+        
+        /* Main content container */
+        .main-container {
+            margin-top: 70px; /* Further increased to ensure cards don't touch navbar */
+            margin-bottom: 70px; /* Further increased to ensure cards don't touch footer */
+            flex: 1;
+            padding: 1rem;
+            max-height: calc(100vh - 140px); /* Adjusted for increased margins */
+            overflow: hidden;
+            width: 100%;
+        }
+        
+        /* New layout styling */
+        .main-content-area {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem; /* Increased gap between top and bottom sections */
+            overflow: hidden; /* Prevent scrolling in the main container */
+            padding-bottom: 10px; /* Increased padding at bottom */
+            width: 100%;
+        }
+        
+        /* Make sure rows take up their allocated height */
+        .row[style*="height"] {
+            margin-right: 0;
+            margin-left: 0;
+            flex-shrink: 0;
+            width: 100%;
+        }
+        
+        /* Row styling for full width */
+        .row {
+            --bs-gutter-x: 1rem;
+            --bs-gutter-y: 0;
+            width: 100%;
+            margin-right: 0;
+            margin-left: 0;
+        }
+        
+        /* Adjust card heights and ensure proper spacing */
+        .row[style*="height"] .dashboard-card {
+            height: calc(100% - 15px); /* Increased margin subtraction to prevent touching */
+            margin: 7px; /* Increased margin around all cards */
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            transform-origin: center center;
+        }
+        
+        .card-header {
+            flex-shrink: 0;
+            padding: 0.75rem 1rem; /* Increased padding */
+        }
+        
+        .card-body {
+            flex: 1;
+            overflow: auto;
+            scrollbar-width: thin;
+            padding: 0.75rem !important; /* Increased padding */
+        }
+        
+        /* Scrollbars for content areas that might overflow */
+        .table-responsive {
+            overflow-y: auto;
+            max-height: calc(100% - 15px); /* Leave room for margins */
+            scrollbar-width: thin;
+        }
+        
+        /* Adjust chart containers */
+        .chart-container {
+            height: 100% !important;
+            min-height: 100px; /* Reduced minimum height */
+            width: 100% !important;
+            padding: 0.5rem;
+        }
+        
+        /* Make tables more compact */
+        .table-sm th, .table-sm td {
+            padding: 0.25rem 0.4rem;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        
+        /* Make nav tabs smaller */
+        .nav-tabs.nav-sm .nav-link {
+            padding: 0.2rem 0.4rem;
+            font-size: 0.8rem;
+        }
+        
+        /* Fixed heights for half sections */
+        .half-height {
+            height: calc(50% - 20px) !important; /* Further reduced height to leave more space */
+        }
+        
+        /* More compact card body styling */
+        .card-body {
+            flex: 1;
+            overflow: auto;
+            scrollbar-width: thin;
+            padding: 0.6rem !important; /* Reduced internal padding */
+        }
+        
+        /* Compact headers, less padding */
+        .card-header {
+            flex-shrink: 0;
+            padding: 0.6rem 0.75rem; /* Reduced padding */
+        }
+        
+        /* More compact heading spacing */
+        h5.card-title {
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+        
+        h2 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Table containers should be smaller */
+        .table-responsive {
+            overflow-y: auto;
+            max-height: calc(100% - 20px); /* More room for margins */
+            scrollbar-width: thin;
+        }
+        
+        /* Enhance auth buttons */
+        .auth-btn, .logout-btn {
+            background: rgba(58, 134, 255, 0.1);
+            border: 1px solid rgba(58, 134, 255, 0.3);
+            box-shadow: 0 0 5px rgba(58, 134, 255, 0.3);
+            transition: all 0.3s ease;
+            padding: 0.25rem 0.75rem;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            border-radius: 20px;
+        }
+        
+        .auth-btn:hover, .logout-btn:hover {
+            background: rgba(58, 134, 255, 0.3);
+            border: 1px solid rgba(58, 134, 255, 0.6);
+            box-shadow: 0 0 10px rgba(58, 134, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        
+        .auth-btn .bi, .logout-btn .bi {
+            transition: transform 0.3s ease;
+        }
+        
+        .auth-btn:hover .bi {
+            transform: translateX(-3px);
+        }
+        
+        .logout-btn:hover .bi {
+            transform: translateX(3px);
+        }
+        
+        /* User email styling in navbar */
+        .user-email {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            padding: 0.25rem 0.75rem;
+            margin-right: 1rem !important;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        
+        .user-email .bi {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+    </style>
 </head>
 <body>
-    {% with messages = get_flashed_messages(with_categories=True) %}
-    <ul>
-    {% for category,message in messages %}
-        <li class="{{category}}">{{message}}</li>
-    {% endfor %}
-    </ul>
-{% endwith %}
-    {% block content %}
-    <!--location to place code in child templates that extend this template-->
-     {% endblock %}
-     <div style="text-align: center;">
-        <a href="./logout">Log Out</a>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="{{ url_for('index') }}">
+                <i class="bi bi-check2-square me-2 text-glow"></i> 
+                <span class="text-glow">TASK·MATRIX</span>
+            </a>
+            <div class="d-flex">
+                {% if current_user.is_authenticated %}
+                    <span class="navbar-text me-3 d-flex align-items-center user-email">
+                        <i class="bi bi-person-circle me-2"></i> {{ current_user.email }}
+                    </span>
+                    <a href="{{ url_for('logout') }}" class="btn btn-outline-primary btn-sm text-light border-light logout-btn">
+                        <i class="bi bi-box-arrow-right me-1"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="btn btn-outline-primary btn-sm text-light border-light auth-btn me-2">
+                        <i class="bi bi-box-arrow-in-right me-1"></i> Login
+                    </a>
+                    <a href="{{ url_for('register') }}" class="btn btn-outline-primary btn-sm text-light border-light auth-btn">
+                        <i class="bi bi-person-plus me-1"></i> Register
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages-container">
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show dashboard-card flash-message" role="alert">
+                            <div class="alert-content">
+                                {{ message }}
+                            </div>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        
+        {% block content %}{% endblock %}
     </div>
+    
+    <footer class="footer">
+        <div class="copyright">
+            &copy; 2025 Task·Matrix | Productivity Dashboard
+        </div>
+        <div class="app-version">
+            <i class="bi bi-info-circle"></i> Version 1.0.0
+        </div>
+    </footer>
+    
+    <!-- Floating Timer Container for Multitasking -->
+    <div class="floating-timers-container" id="floatingTimers"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <!-- Add script to auto-dismiss flash messages -->
+    <script>
+        // Auto-dismiss flash messages after 5 seconds
+        $(document).ready(function() {
+            setTimeout(function() {
+                $('.flash-message').fadeOut('slow', function() {
+                    $(this).remove();
+                });
+            }, 5000);
+            
+            // Clear flash messages from session storage to prevent them from reappearing
+            if (window.sessionStorage) {
+                sessionStorage.removeItem('_flashes');
+            }
+        });
+    </script>
+    
+    <!-- Add this script for managing multiple timers -->
+    <script>
+        // Global object to track all active timers
+        const activeTimers = {};
+        
+        // Function to add a timer to the floating container
+        function addFloatingTimer(taskId, taskName) {
+            if (document.getElementById(`floating-timer-${taskId}`)) {
+                // Timer already exists in floating container
+                return;
+            }
+            
+            const timerCard = document.createElement('div');
+            timerCard.id = `floating-timer-${taskId}`;
+            timerCard.className = 'timer-card';
+            timerCard.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <div class="task-name">${taskName}</div>
+                    <span class="timer-badge timer-badge-running">Running</span>
+                </div>
+                <div class="timer-display" id="floating-time-${taskId}">00:00:00</div>
+                <div class="timer-controls">
+                    <button class="btn btn-sm btn-danger" onclick="stopFloatingTimer(${taskId})">
+                        <i class="bi bi-stop-fill"></i> Stop
+                    </button>
+                    <button class="btn btn-sm btn-outline-light" onclick="maximizeTimer(${taskId})">
+                        <i class="bi bi-arrows-angle-expand"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="closeFloatingTimer(${taskId})">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            `;
+            
+            document.getElementById('floatingTimers').appendChild(timerCard);
+        }
+        
+        // Function to remove a timer from the floating container
+        function closeFloatingTimer(taskId) {
+            const timerCard = document.getElementById(`floating-timer-${taskId}`);
+            if (timerCard) {
+                timerCard.style.animation = 'slide-in 0.3s reverse';
+                setTimeout(() => {
+                    timerCard.remove();
+                }, 280);
+            }
+        }
+        
+        // Function to maximize a timer by opening the task details modal
+        function maximizeTimer(taskId) {
+            // Find the View button for this task and click it
+            const viewButton = document.querySelector(`.view-task[data-task-id="${taskId}"]`);
+            if (viewButton) {
+                viewButton.click();
+            }
+        }
+        
+        // Function to stop a timer from the floating container
+        function stopFloatingTimer(taskId) {
+            fetch(`/timer/${taskId}/stop`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        closeFloatingTimer(taskId);
+                        if (activeTimers[taskId]) {
+                            clearInterval(activeTimers[taskId].interval);
+                            delete activeTimers[taskId];
+                        }
+                    }
+                })
+                .catch(error => {
+                    console.error('Error stopping timer:', error);
+                });
+        }
+        
+        // Function to update all active timer displays
+        function updateAllTimers() {
+            Object.keys(activeTimers).forEach(taskId => {
+                const timer = activeTimers[taskId];
+                const elapsedSeconds = Math.floor((Date.now() - timer.startTime) / 1000);
+                
+                // Update floating timer display
+                const floatingDisplay = document.getElementById(`floating-time-${taskId}`);
+                if (floatingDisplay) {
+                    floatingDisplay.textContent = formatTime(elapsedSeconds);
+                }
+                
+                // Update modal timer display if open
+                const modalDisplay = document.getElementById(`timer-${taskId}`);
+                if (modalDisplay) {
+                    modalDisplay.textContent = formatTime(elapsedSeconds);
+                }
+                
+                // Update progress bar if exists
+                const progressBar = document.getElementById(`progress-${taskId}`);
+                if (progressBar && timer.estimatedTime) {
+                    const percentage = Math.min(100, (elapsedSeconds / 60) / timer.estimatedTime * 100);
+                    progressBar.style.width = `${percentage}%`;
+                    
+                    // Change color based on percentage
+                    if (percentage > 100) {
+                        progressBar.classList.remove('bg-primary', 'bg-warning');
+                        progressBar.classList.add('bg-danger');
+                    } else if (percentage > 75) {
+                        progressBar.classList.remove('bg-primary', 'bg-danger');
+                        progressBar.classList.add('bg-warning');
+                    } else {
+                        progressBar.classList.remove('bg-warning', 'bg-danger');
+                        progressBar.classList.add('bg-primary');
+                    }
+                }
+            });
+        }
+        
+        // Start interval to update all timers every second
+        setInterval(updateAllTimers, 1000);
+        
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+    </script>
+    
+    {% block scripts %}{% endblock %}
 </body>
 </html>

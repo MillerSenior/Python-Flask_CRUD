@@ -142,8 +142,8 @@ def complete_task():
     task = Task.query.get(task_id)
     if task and task.owner == current_user:
         task.completed = True
-        db.session.add(task)
-        db.session.commit()
+    db.session.add(task)
+    db.session.commit()
     return redirect('/')
 
 @app.route('/login', methods=['POST', 'GET'])  

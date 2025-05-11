@@ -1,0 +1,206 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Overview Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Tasks</h3>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ total_tasks }}</p>
+        </div>
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Completed Tasks</h3>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ completed_tasks|length }}</p>
+        </div>
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Total Time Spent</h3>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ total_time_spent }} min</p>
+        </div>
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-sm font-medium text-gray-600 dark:text-gray-400">Average Time per Task</h3>
+            <p class="text-2xl font-semibold text-gray-900 dark:text-white">{{ avg_time_per_task }} min</p>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Tasks by Priority -->
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Tasks by Priority</h3>
+            <canvas id="priorityChart" class="w-full h-64"></canvas>
+        </div>
+
+        <!-- Time Spent by Category -->
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Time Spent by Category</h3>
+            <canvas id="categoryChart" class="w-full h-64"></canvas>
+        </div>
+
+        <!-- Daily Task Completion -->
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Daily Task Completion</h3>
+            <canvas id="dailyChart" class="w-full h-64"></canvas>
+        </div>
+
+        <!-- Task Completion Rate -->
+        <div class="glass rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Task Completion Rate</h3>
+            <canvas id="completionRateChart" class="w-full h-64"></canvas>
+        </div>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Chart.js configuration
+const chartConfig = {
+    type: 'doughnut',
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                }
+            }
+        }
+    }
+};
+
+// Tasks by Priority Chart
+new Chart(document.getElementById('priorityChart'), {
+    ...chartConfig,
+    data: {
+        labels: ['High', 'Medium', 'Low'],
+        datasets: [{
+            data: [
+                {{ tasks_by_priority.high }},
+                {{ tasks_by_priority.medium }},
+                {{ tasks_by_priority.low }}
+            ],
+            backgroundColor: [
+                'rgba(239, 68, 68, 0.8)',  // red
+                'rgba(234, 179, 8, 0.8)',  // yellow
+                'rgba(34, 197, 94, 0.8)'   // green
+            ]
+        }]
+    }
+});
+
+// Time Spent by Category Chart
+new Chart(document.getElementById('categoryChart'), {
+    ...chartConfig,
+    data: {
+        labels: {{ category_labels|tojson }},
+        datasets: [{
+            data: {{ category_times|tojson }},
+            backgroundColor: [
+                'rgba(59, 130, 246, 0.8)',  // blue
+                'rgba(16, 185, 129, 0.8)',  // green
+                'rgba(245, 158, 11, 0.8)',  // orange
+                'rgba(139, 92, 246, 0.8)'   // purple
+            ]
+        }]
+    }
+});
+
+// Daily Task Completion Chart
+new Chart(document.getElementById('dailyChart'), {
+    type: 'line',
+    data: {
+        labels: {{ daily_labels|tojson }},
+        datasets: [{
+            label: 'Completed Tasks',
+            data: {{ daily_completions|tojson }},
+            borderColor: 'rgb(59, 130, 246)',
+            tension: 0.1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                }
+            },
+            x: {
+                ticks: {
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                }
+            }
+        }
+    }
+});
+
+// Task Completion Rate Chart
+new Chart(document.getElementById('completionRateChart'), {
+    type: 'bar',
+    data: {
+        labels: ['Completion Rate'],
+        datasets: [{
+            label: 'Completion Rate',
+            data: [{{ completion_rate }}],
+            backgroundColor: 'rgba(16, 185, 129, 0.8)'
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                ticks: {
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000',
+                    callback: function(value) {
+                        return value + '%';
+                    }
+                }
+            },
+            x: {
+                ticks: {
+                    color: document.documentElement.classList.contains('dark') ? '#fff' : '#000'
+                }
+            }
+        }
+    }
+});
+
+// Update chart colors when dark mode changes
+const darkModeToggle = document.getElementById('darkModeToggle');
+darkModeToggle.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.contains('dark');
+    const textColor = isDark ? '#fff' : '#000';
+    
+    // Update all charts
+    Chart.instances.forEach(chart => {
+        chart.options.plugins.legend.labels.color = textColor;
+        if (chart.options.scales) {
+            if (chart.options.scales.x) {
+                chart.options.scales.x.ticks.color = textColor;
+            }
+            if (chart.options.scales.y) {
+                chart.options.scales.y.ticks.color = textColor;
+            }
+        }
+        chart.update();
+    });
+});
+</script>
+{% endblock %}
+{% endblock %} 
